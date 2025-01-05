@@ -18,8 +18,7 @@ export class classBEncoding {
     for (; this.file[this.index] !== 101; ) {
       const key = this.parseString();
       if (key === "pieces") {
-        this.index = this.index + 6 + 69240;
-        dictionary[key] = "HASHES";
+        dictionary.pieces = this.getHashes(this.index);
       } else if (this.file[this.index] === 108) {
         dictionary[key] = this.parseList();
       } else if (this.file[this.index] === 100) {
@@ -94,5 +93,18 @@ export class classBEncoding {
     }
     this.index = position;
     return s;
+  }
+
+  private getHashes(startIndex: number): Array<Buffer> {
+    const endIndex = this.getEndIndex(startIndex);
+    const length = this.getLengthOfNextCharacters(endIndex);
+    this.index = endIndex + 2 + length;
+    const numberOfPieces = length / 20;
+    const hashes: Buffer[] = [];
+    for (let i = 1; i <= numberOfPieces; i++) {
+      hashes.push(this.file.subarray(startIndex, startIndex + 20));
+      startIndex += 20;
+    }
+    return hashes;
   }
 }
