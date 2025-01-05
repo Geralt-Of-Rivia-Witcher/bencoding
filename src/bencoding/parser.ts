@@ -17,15 +17,15 @@ export class classBEncoding {
     this.index++;
     for (; this.file[this.index] !== 101; ) {
       const key = this.parseString();
-      if (this.file[this.index] === 108) {
+      if (key === "pieces") {
+        this.index = this.index + 6 + 69240;
+        dictionary[key] = "HASHES";
+      } else if (this.file[this.index] === 108) {
         dictionary[key] = this.parseList();
       } else if (this.file[this.index] === 100) {
         dictionary[key] = this.parseDictionary();
       } else {
         dictionary[key] = this.parseStringOrNumber();
-      }
-      if (key === "pieces") {
-        dictionary[key] = "HASHES";
       }
     }
     this.index++;
@@ -57,14 +57,6 @@ export class classBEncoding {
     return this.parseString();
   }
 
-  private getEndIndex(startIndex: number): number {
-    const asciiValue = this.file[startIndex];
-    if (asciiValue === 58) {
-      return startIndex - 1;
-    }
-    return this.getEndIndex(startIndex + 1);
-  }
-
   private parseInteger(): number {
     let s: string = "",
       position = this.index + 1;
@@ -75,15 +67,27 @@ export class classBEncoding {
     return parseInt(s);
   }
 
-  private parseString(): string {
+  private getEndIndex(startIndex: number): number {
+    const asciiValue = this.file[startIndex];
+    if (asciiValue === 58) {
+      return startIndex - 1;
+    }
+    return this.getEndIndex(startIndex + 1);
+  }
+
+  private getLengthOfNextCharacters(endIndex: number): number {
     const startIndex = this.index;
-    const endIndex = this.getEndIndex(this.index);
     let asciiCharacters = "";
     for (let pos = startIndex; pos <= endIndex; pos++) {
       asciiCharacters += String.fromCharCode(this.file[pos]);
     }
+    return parseInt(asciiCharacters);
+  }
+
+  private parseString(): string {
+    const endIndex = this.getEndIndex(this.index);
+    const length = this.getLengthOfNextCharacters(endIndex);
     let s: string = "";
-    const length = parseInt(asciiCharacters);
     let position = endIndex + 2;
     for (; position < endIndex + 2 + length; position++) {
       s += String.fromCharCode(this.file[position]);
