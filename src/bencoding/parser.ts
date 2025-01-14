@@ -1,8 +1,8 @@
 import { Dictionary, List } from "./type/parser.type";
 
 export class classBEncoding {
-  index: number;
-  file: Buffer<ArrayBufferLike>;
+  private index: number;
+  private file: Buffer<ArrayBufferLike>;
   constructor(file: Buffer<ArrayBufferLike>) {
     this.file = file;
     this.index = 0;
@@ -16,7 +16,7 @@ export class classBEncoding {
     const dictionary: Dictionary = {};
     this.index++;
     for (; this.file[this.index] !== 101; ) {
-      const key = this.parseString();
+      const key = this.parseString().toString();
       if (key === "pieces") {
         dictionary.pieces = this.getHashes(this.index);
       } else if (this.file[this.index] === 108) {
@@ -49,7 +49,7 @@ export class classBEncoding {
     return list;
   }
 
-  private parseStringOrNumber(): string | number {
+  private parseStringOrNumber(): Buffer | number {
     if (this.file[this.index] === 105) {
       return this.parseInteger();
     }
@@ -83,28 +83,17 @@ export class classBEncoding {
     return parseInt(asciiCharacters);
   }
 
-  private parseString(): string {
+  private parseString(): Buffer {
     const endIndex = this.getEndIndex(this.index);
     const length = this.getLengthOfNextCharacters(endIndex);
-    let s: string = "";
-    let position = endIndex + 2;
-    for (; position < endIndex + 2 + length; position++) {
-      s += String.fromCharCode(this.file[position]);
-    }
-    this.index = position;
-    return s;
+    this.index = endIndex + 2 + length;
+    return this.file.subarray(endIndex + 2, this.index);
   }
 
-  private getHashes(startIndex: number): Array<Buffer> {
+  private getHashes(startIndex: number): Buffer {
     const endIndex = this.getEndIndex(startIndex);
     const length = this.getLengthOfNextCharacters(endIndex);
     this.index = endIndex + 2 + length;
-    const numberOfPieces = length / 20;
-    const hashes: Buffer[] = [];
-    for (let i = 1; i <= numberOfPieces; i++) {
-      hashes.push(this.file.subarray(startIndex, startIndex + 20));
-      startIndex += 20;
-    }
-    return hashes;
+    return this.file.subarray(endIndex + 2, this.index);
   }
 }

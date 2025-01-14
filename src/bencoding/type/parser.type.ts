@@ -1,7 +1,7 @@
 export type Dictionary = {
-  [key: string]: string | number | List | Dictionary;
+  [key: string]: Buffer | number | List | Dictionary;
 } & {
-  pieces?: Buffer[];
+  pieces?: Buffer;
 };
 
-export type List = (string | number | List | Dictionary)[];
+export type List = (Buffer | number | List | Dictionary)[];
